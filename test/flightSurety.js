@@ -43,7 +43,7 @@ contract('Flight Surety Tests', async (accounts) => {
       let accessDenied = false;
       try
       {
-          await config.flightSuretyData.setOperatingStatus(false, {from: config.owner});
+          await config.flightSuretyData.setOperatingStatus(false);
       }
       catch(e) {
           accessDenied = true;

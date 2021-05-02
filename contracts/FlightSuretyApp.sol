@@ -36,7 +36,7 @@ contract FlightSuretyApp {
 
     bool private operational = true;
 
-    FlightSuretyData flightSuretyData
+    FlightSuretyData flightSuretyData;
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -90,7 +90,7 @@ contract FlightSuretyApp {
 
     function isOperational()
                             public
-                            pure
+                            view
                             returns(bool)
     {
         return operational;  // Modify to call data contract's status
@@ -110,10 +110,32 @@ contract FlightSuretyApp {
                                 address airline
                             )
                             external
-                            pure
                             returns(bool success, uint256 votes)
     {
-        return (success, 0);
+        address[] memory operatingAirlines = flightSuretyData.getOperatingAirlines();
+        success = false;
+        votes = 0;
+        uint numberOfOperatingAirlines = operatingAirlines.length;
+
+        if(numberOfOperatingAirlines < 4 && numberOfOperatingAirlines > 0) {
+            flightSuretyData.registerAirline(airline);
+            success = true;
+        } else if(numberOfOperatingAirlines >= 4) {
+            for (uint i = 0; i < numberOfOperatingAirlines; i++) {
+                if(voteForAirline(airline, operatingAirlines[i])) {
+                    votes = votes++;
+                }
+            }
+            if(votes >= numberOfOperatingAirlines.div(2)) {
+                success = true;
+            }
+        }
+
+        return (success, votes);
+    }
+
+    function voteForAirline (address candidateAirline, address votingAirline) returns(bool) {
+        return true;
     }
 
     function fundAirline (address airline) payable public requireIsOperational {
@@ -344,10 +366,13 @@ contract FlightSuretyApp {
     }
 
 // endregion
+}
 
-    contract FlightSuretyData {
-        function registerAirline(address airline) external;
-        function fund(address airline) payable external;
-        function getAccountBalance (address airline) external view returns(bool);
-    }
+
+contract FlightSuretyData {
+    function registerAirline(address airline) external;
+    function fund(address airline) payable external;
+    function getAccountBalance (address airline) external view returns(bool);
+    function getOperatingAirlines () external view returns(address[]);
+
 }

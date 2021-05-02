@@ -117,12 +117,12 @@ contract FlightSuretyData {
         operational = mode;
     }
 
-    function getAccountBalance (address airline) external view returns(bool) {
+    function getAccountBalance (address airline) external view returns(uint256) {
         return accountBalances[airline];
     }
 
-    function getNumberOfOperatingAirlines () external view return(uint) {
-        return operatingAirlinesList.length;
+    function getOperatingAirlines () external view returns(address[]) {
+        return operatingAirlinesList;
     }
 
     /********************************************************************************************/
@@ -205,8 +205,8 @@ contract FlightSuretyData {
                             payable
                             requireIsOperational
     {
-        if(accountBalances[account]) {
-            accountBalances[account] = accountBalances.add(msg.value);
+        if(accountBalances[account] > 0) {
+            accountBalances[account] = accountBalances[account].add(msg.value);
         } else {
             accountBalances[account] = msg.value;
         }
@@ -238,7 +238,7 @@ contract FlightSuretyData {
                             external
                             payable
     {
-        fund();
+        fund(contractOwner);
     }
 
 
