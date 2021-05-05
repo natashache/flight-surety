@@ -112,6 +112,8 @@ contract FlightSuretyApp {
                             external
                             returns(bool success, uint256 votes)
     {
+        require(flightSuretyData.isOperatingAirline(msg.sender), "Airline needs to be funded.");
+
         address[] memory operatingAirlines = flightSuretyData.getOperatingAirlines();
         success = false;
         votes = 0;
@@ -139,7 +141,8 @@ contract FlightSuretyApp {
     }
 
     function fundAirline (address airline) payable public requireIsOperational {
-        flightSuretyData.fund.value(msg.value)(msg.sender);
+        require(msg.sender == airline, "Only the airline owner can fund ");
+        flightSuretyData.fund(airline, msg.value);
     }
 
 
@@ -371,8 +374,9 @@ contract FlightSuretyApp {
 
 contract FlightSuretyData {
     function registerAirline(address airline) external;
-    function fund(address airline) payable external;
+    function fund(address airline, uint256 amount) payable external;
     function getAccountBalance (address airline) external view returns(bool);
     function getOperatingAirlines () external view returns(address[]);
+    function isOperatingAirline(address airline) external view returns(bool);
 
 }

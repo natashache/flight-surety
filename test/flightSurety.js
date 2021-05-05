@@ -1,6 +1,9 @@
 
 var Test = require('../config/testConfig.js');
 var BigNumber = require('bignumber.js');
+var Web3 = require('web3')
+var url = 'HTTP://127.0.0.1:7545';
+var web3 = new Web3(url);
 
 contract('Flight Surety Tests', async (accounts) => {
 
@@ -90,5 +93,27 @@ contract('Flight Surety Tests', async (accounts) => {
 
   });
 
+  it('(airline) can register an Airline using registerAirline() after it is funded', async () => {
+
+    // ARRANGE
+    let newAirline = accounts[2];
+    let funding = 10000000000000000000; // 10 ether
+    // ACT
+    await config.flightSuretyApp.fundAirline(config.firstAirline, {from: config.firstAirline, value: funding});
+    let isOperatingAirline = await config.flightSuretyData.isOperatingAirline.call(config.firstAirline);
+    console.log('isOperatingAirline: ', isOperatingAirline);
+
+    try {
+        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+    }
+    catch(e) {
+
+    }
+    let result = await config.flightSuretyData.isAirline.call(newAirline);
+
+    // ASSERT
+    assert.equal(result, true, "Airline should be able to register another airline if it has provided funding");
+
+  });
 
 });

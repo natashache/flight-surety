@@ -12,10 +12,15 @@ contract FlightSuretyData {
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
 
-    mapping(address => bool) private airlines;
+    struct airline {
+        bool isRegistered;
+        uint256 balance;
+    }
+
+    mapping(address => airline) private airlines;
     mapping(address => bool) private operatingAirlines;
     address[] operatingAirlinesList;
-    mapping(address => uint256) private accountBalances;
+
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -33,7 +38,10 @@ contract FlightSuretyData {
                                 public
     {
         contractOwner = msg.sender;
-        airlines[firstAirline] = true; // autho register contract owner as the first airline
+        airlines[firstAirline] = airline({
+            isRegistered: true,
+            balance: 0
+        }); // autho register the first airline
     }
 
     /********************************************************************************************/
@@ -87,7 +95,7 @@ contract FlightSuretyData {
 
     function isAirline(address airline) public view returns (bool)
     {
-        return airlines[airline];
+        return airlines[airline].isRegistered;
     }
 
     function isOperatingAirline(address airline) public view returns (bool)
@@ -96,7 +104,7 @@ contract FlightSuretyData {
     }
 
     function isAuthorizedCaller(address caller) returns (bool) {
-       return accountBalances[caller] >= 10 ether;
+       return airlines[caller].balance >= 10 ether;
     }
 
 
@@ -118,7 +126,7 @@ contract FlightSuretyData {
     }
 
     function getAccountBalance (address airline) external view returns(uint256) {
-        return accountBalances[airline];
+        return airlines[airline].balance;
     }
 
     function getOperatingAirlines () external view returns(address[]) {
@@ -136,12 +144,15 @@ contract FlightSuretyData {
     */
     function registerAirline
                             (
-                                address airline
+                                address newAirline
                             )
                             external
                             requireIsAuthorizedCaller
     {
-        airlines[airline] = true;
+        airlines[newAirline] = airline({
+            isRegistered: true,
+            balance: 0
+        });
     }
 
     function setAirlineOperatingStatus
@@ -199,19 +210,16 @@ contract FlightSuretyData {
     */
     function fund
                             (
-                                address account
+                                address account,
+                                uint256 amount
                             )
                             public
                             payable
                             requireIsOperational
     {
-        if(accountBalances[account] > 0) {
-            accountBalances[account] = accountBalances[account].add(msg.value);
-        } else {
-            accountBalances[account] = msg.value;
-        }
+        airlines[account].balance = airlines[account].balance.add(amount);
 
-        if(isAirline(account) && accountBalances[account] > 10 ether) {
+        if(isAirline(account) && airlines[account].balance > 10 ether) {
             setAirlineOperatingStatus(account, true);
         }
 
@@ -238,7 +246,7 @@ contract FlightSuretyData {
                             external
                             payable
     {
-        fund(contractOwner);
+        fund(contractOwner, msg.value);
     }
 
 
