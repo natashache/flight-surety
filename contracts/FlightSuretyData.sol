@@ -12,12 +12,12 @@ contract FlightSuretyData {
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
 
-    struct airline {
+    struct airlineObj {
         bool isRegistered;
         uint256 balance;
     }
 
-    mapping(address => airline) private airlines;
+    mapping(address => airlineObj) private airlines;
     mapping(address => bool) private operatingAirlines;
     address[] operatingAirlinesList;
 
@@ -38,7 +38,7 @@ contract FlightSuretyData {
                                 public
     {
         contractOwner = msg.sender;
-        airlines[firstAirline] = airline({
+        airlines[firstAirline] = airlineObj({
             isRegistered: true,
             balance: 0
         }); // autho register the first airline
@@ -101,6 +101,7 @@ contract FlightSuretyData {
     function isOperatingAirline(address airline) public view returns (bool)
     {
         return operatingAirlines[airline];
+        // return true;
     }
 
     function isAuthorizedCaller(address caller) returns (bool) {
@@ -149,7 +150,7 @@ contract FlightSuretyData {
                             external
                             requireIsAuthorizedCaller
     {
-        airlines[newAirline] = airline({
+        airlines[newAirline] = airlineObj({
             isRegistered: true,
             balance: 0
         });
@@ -219,8 +220,10 @@ contract FlightSuretyData {
     {
         airlines[account].balance = airlines[account].balance.add(amount);
 
+
         if(isAirline(account) && airlines[account].balance > 10 ether) {
-            setAirlineOperatingStatus(account, true);
+            operatingAirlines[account] = true;
+            operatingAirlinesList.push(account);
         }
 
     }

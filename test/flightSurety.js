@@ -77,7 +77,7 @@ contract('Flight Surety Tests', async (accounts) => {
   it('(airline) cannot register an Airline using registerAirline() if it is not funded', async () => {
 
     // ARRANGE
-    let newAirline = accounts[2];
+    let newAirline = accounts[3];
 
     // ACT
     try {
@@ -96,7 +96,7 @@ contract('Flight Surety Tests', async (accounts) => {
   it('(airline) can register an Airline using registerAirline() after it is funded', async () => {
 
     // ARRANGE
-    let newAirline = accounts[2];
+    let newAirline = accounts[3];
     let funding = 10000000000000000000; // 10 ether
     // ACT
     await config.flightSuretyApp.fundAirline(config.firstAirline, {from: config.firstAirline, value: funding});
@@ -104,7 +104,7 @@ contract('Flight Surety Tests', async (accounts) => {
     console.log('isOperatingAirline: ', isOperatingAirline);
 
     try {
-        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+        await config.flightSuretyApp.registerAirline.sendTransaction(newAirline, {from: config.firstAirline});
     }
     catch(e) {
 
