@@ -10,7 +10,7 @@ contract('Flight Surety Tests', async (accounts) => {
   var config;
   before('setup contract', async () => {
     config = await Test.Config(accounts);
-    // await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
+    await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
   });
 
   /****************************************************************************************/
@@ -100,19 +100,50 @@ contract('Flight Surety Tests', async (accounts) => {
     let funding = 10000000000000000000; // 10 ether
     // ACT
     await config.flightSuretyApp.fundAirline(config.firstAirline, {from: config.firstAirline, value: funding});
-    let isOperatingAirline = await config.flightSuretyData.isOperatingAirline.call(config.firstAirline);
-    console.log('isOperatingAirline: ', isOperatingAirline);
+    // let isOperatingAirline = await config.flightSuretyData.isOperatingAirline.call(config.firstAirline);
+    // console.log('isOperatingAirline: ', isOperatingAirline);
 
     try {
-        await config.flightSuretyApp.registerAirline.sendTransaction(newAirline, {from: config.firstAirline});
+        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
     }
     catch(e) {
-
+      console.log(e);
     }
     let result = await config.flightSuretyData.isAirline.call(newAirline);
 
     // ASSERT
     assert.equal(result, true, "Airline should be able to register another airline if it has provided funding");
+
+  });
+
+  it('The fifth airline can be registered with multiparty concensus ', async () => {
+
+    // ARRANGE
+    let newAirline1 = accounts[3]
+    let newAirline2 = accounts[4];
+    let newAirline3 = accounts[5];
+    let newAirline4 = accounts[6];
+
+    let funding = 10000000000000000000; // 10 ether
+    // ACT
+
+    await config.flightSuretyApp.fundAirline(newAirline1, {from: newAirline1, value: funding});
+
+    await config.flightSuretyApp.registerAirline(newAirline2, {from: config.firstAirline});
+    await config.flightSuretyApp.fundAirline(newAirline2, {from: newAirline2, value: funding});
+    await config.flightSuretyApp.registerAirline(newAirline3, {from: config.firstAirline});
+    await config.flightSuretyApp.fundAirline(newAirline3, {from: newAirline3, value: funding});
+
+    await config.flightSuretyApp.registerAirline(newAirline4, {from: config.firstAirline});
+    await config.flightSuretyApp.fundAirline(newAirline4, {from: newAirline4, value: funding});
+
+    let isOperatingAirline = await config.flightSuretyData.isOperatingAirline.call(newAirline4);
+    console.log('isOperatingAirline: ', isOperatingAirline);
+
+    let result = await config.flightSuretyData.isAirline.call(newAirline4);
+
+    // ASSERT
+    assert.equal(result, true, "New aireline should be able to register using multiparty concensus");
 
   });
 

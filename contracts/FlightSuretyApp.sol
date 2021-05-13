@@ -125,10 +125,11 @@ contract FlightSuretyApp {
         } else if(numberOfOperatingAirlines >= 4) {
             for (uint i = 0; i < numberOfOperatingAirlines; i++) {
                 if(voteForAirline(airline, operatingAirlines[i])) {
-                    votes = votes++;
+                    votes = votes + 1;
                 }
             }
             if(votes >= numberOfOperatingAirlines.div(2)) {
+                flightSuretyData.registerAirline(airline);
                 success = true;
             }
         }

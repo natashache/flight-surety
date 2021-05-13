@@ -17,6 +17,7 @@ contract FlightSuretyData {
         uint256 balance;
     }
 
+    mapping(address => bool) private authorizedCallers;
     mapping(address => airlineObj) private airlines;
     mapping(address => bool) private operatingAirlines;
     address[] operatingAirlinesList;
@@ -104,8 +105,28 @@ contract FlightSuretyData {
         // return true;
     }
 
+    function authorizeCaller
+                            (
+                                address contractAddress
+                            )
+                            external
+                            requireContractOwner
+    {
+        authorizedCallers[contractAddress] = true;
+    }
+
+    function deauthorizeCaller
+                            (
+                                address contractAddress
+                            )
+                            external
+                            requireContractOwner
+    {
+        delete authorizedCallers[contractAddress];
+    }
+
     function isAuthorizedCaller(address caller) returns (bool) {
-       return airlines[caller].balance >= 10 ether;
+       return authorizedCallers[caller];
     }
 
 
@@ -221,7 +242,7 @@ contract FlightSuretyData {
         airlines[account].balance = airlines[account].balance.add(amount);
 
 
-        if(isAirline(account) && airlines[account].balance > 10 ether) {
+        if(isAirline(account) && airlines[account].balance >= 10 ether) {
             operatingAirlines[account] = true;
             operatingAirlinesList.push(account);
         }
