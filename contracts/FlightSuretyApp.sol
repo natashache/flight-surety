@@ -89,7 +89,7 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
     function isOperational()
-                            public
+                            external
                             view
                             returns(bool)
     {
@@ -144,6 +144,10 @@ contract FlightSuretyApp {
     function fundAirline (address airline) payable public requireIsOperational {
         require(msg.sender == airline, "Only the airline owner can fund ");
         flightSuretyData.fund(airline, msg.value);
+    }
+
+    function getOperatingAirlines () external view requireIsOperational returns(address[]) {
+        return flightSuretyData.getOperatingAirlines();
     }
 
 

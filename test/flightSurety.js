@@ -147,4 +147,23 @@ contract('Flight Surety Tests', async (accounts) => {
 
   });
 
+  it('(airline) can be registered, but does not participate in contract until it submits funding of 10 ether', async () => {
+
+    // ARRANGE
+    let newAirline5 = accounts[7];
+    let funding = 10000000000000000000; // 10 ether
+    // ACT
+    await config.flightSuretyApp.registerAirline(newAirline5, {from: config.firstAirline});
+    let result1 = await config.flightSuretyData.isOperatingAirline.call(newAirline5);
+
+    await config.flightSuretyApp.fundAirline(newAirline5, {from: newAirline5, value: funding});
+    let result2 = await config.flightSuretyData.isOperatingAirline.call(newAirline5);
+
+
+    // ASSERT
+    assert.equal(result1, false, "Unfunded airline should not be operational");
+    assert.equal(result2, true, "Funded airline should be operational");
+
+  });
+
 });
