@@ -21,16 +21,18 @@ let accounts = [];
 const registerOracles = async () => {
   accounts = await web3.eth.getAccounts();
 
-  for(let i = 20; i < 20 + initialOracleCount; i++) {
-    await flightSuretyApp.methods.registerOracle.send({
-      from: accounts[i],
-      value: web3.utils.toWei('1', 'ether'),
-      gas: 1000000,
-    });
+  for(let i = 1; i < 1 + initialOracleCount; i++) {
+    // await flightSuretyApp.methods.registerOracle().send({
+    //   from: accounts[i],
+    //   value: web3.utils.toWei('1', 'ether'),
+    //   gas: 1000000,
+    // });
 
-    let indexes = await flightSuretyApp.methods.getMyIndexes.call({
-      from: accounts[i],
-      gas: 100000,
+    registerOracle(accounts[i]);
+
+    let indexes = await flightSuretyApp.methods.getMyIndexes().call({
+      "from": accounts[i],
+      "gas": 100000,
     });
     oracles.push({
       account: accounts[i],
@@ -38,6 +40,14 @@ const registerOracles = async () => {
     });
     console.log('Oracle: ', i - 19, 'account: ', accounts[i], 'indexes: ', indexes);
   }
+};
+
+const registerOracle = async (account) => {
+    await flightSuretyApp.methods.registerOracle().send({
+      from: account,
+      value: web3.utils.toWei('1', 'ether'),
+      gas: 1000000,
+    });
 };
 
 const submitOracleResponses = async (event) => {
@@ -84,10 +94,10 @@ flightSuretyApp.events.OracleRequest({
 const getRandomFlightStatus = () => {
   let randomNumber = Math.floor(Math.random() * 10);
   if(randomNumber < 6) {
-    return 20; // need to pay passenger
+    return 20; // 60% chance airline needs to pay passenger
   } else {
     let randomDelayNumber = Math.floor(Math.random() * 5);
-    return noPayoutStatusCodes[randomDelayNumber]; // no need to pay passenger
+    return noPayoutStatusCodes[randomDelayNumber]; // 40% chance no need to pay passenger
   }
 };
 

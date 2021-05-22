@@ -17,9 +17,24 @@ contract FlightSuretyData {
         uint256 balance;
     }
 
+    struct flightObj {
+        string flightNumber;
+        address airline;
+        uint8 statusCode;
+    }
+
+    struct insureeObj {
+            uint256 amount;
+            bool paid;
+    }
+
     mapping(address => bool) private authorizedCallers;
     mapping(address => airlineObj) private airlines;
     mapping(address => bool) private operatingAirlines;
+    mapping(string => mapping(address => insureeObj)) private insurances; //map from flight number to (insuree address, insurance payment amount)
+    mapping(string => flightObj) private flights; //map from flight number to flight object
+    mapping(string => address[]) private insureesForFlight; // map from flight number to an array of passenger addresses that purchased insurance for that flight
+    mapping(address => uint256) insureeBalance;
     address[] operatingAirlinesList;
 
 
@@ -192,24 +207,42 @@ contract FlightSuretyData {
     * @dev Buy insurance for a flight
     *
     */
-    function buy
-                            (
-                            )
+    function buyInsurance (string flightNumber, address insuree, uint256 amount)
                             external
                             payable
     {
-
+        insurances[flightNumber][insuree] = insureeObj({
+            paid: false,
+            amount: amount
+        });
+        insureesForFlight[flightNumber].push(insuree);
+        address airlineAddress = flights[flightNumber].airline;
+        airlines[airlineAddress].balance = airlines[airlineAddress].balance.add(amount);
     }
 
     /**
      *  @dev Credits payouts to insurees
     */
-    function creditInsurees
-                                (
-                                )
+    function creditInsurees(string flightNumber, uint8 multiple)
                                 external
-                                pure
     {
+        address airlineAddress = flights[flightNumber].airline;
+
+        for(uint i = 0; i < insureesForFlight[flightNumber].length; i++) {
+            address insuree = insureesForFlight[flightNumber][i];
+            if(insurances[flightNumber][insuree].paid == false) {
+                uint256 payoutAmount = insurances[flightNumber][insuree].amount.mul(multiple).div(10);
+                insurances[flightNumber][insuree].amount = payoutAmount;
+                airlines[airlineAddress].balance = airlines[airlineAddress].balance.sub(payoutAmount);
+                insurances[flightNumber][insuree].paid == true;
+                if(insureeBalance[insuree] > 0) {
+                    insureeBalance[insuree] = insureeBalance[insuree].add(payoutAmount);
+                } else {
+                    insureeBalance[insuree] = payoutAmount;
+                }
+
+            }
+        }
     }
 
 
@@ -217,12 +250,15 @@ contract FlightSuretyData {
      *  @dev Transfers eligible payout funds to insuree
      *
     */
-    function pay
-                            (
-                            )
+    function payInsuree (address insuree, uint256 amount)
                             external
-                            pure
+                            requireIsOperational
+
     {
+        require(insureeBalance[insuree] >= amount, "Not enough funds in insuree account balance.");
+
+        insureeBalance[insuree] = insureeBalance[insuree].sub(amount);
+        insuree.transfer(amount);
     }
 
    /**

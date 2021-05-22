@@ -32,7 +32,7 @@ contract FlightSuretyApp {
         uint256 updatedTimestamp;
         address airline;
     }
-    mapping(bytes32 => Flight) private flights;
+    mapping(string => Flight) private flights;
 
     bool private operational = true;
 
@@ -157,10 +157,21 @@ contract FlightSuretyApp {
     */
     function registerFlight
                                 (
+                                    address airline,
+                                    string flight,
+                                    uint256 timestamp
                                 )
                                 external
-                                pure
+
     {
+        require(flights[flight].isRegistered == false, "The flight is already registered.");
+
+        flights[flight] = Flight({
+             isRegistered: true,
+             statusCode: STATUS_CODE_UNKNOWN,
+             updatedTimestamp: timestamp,
+             airline: airline
+        });
 
     }
 
@@ -176,8 +187,10 @@ contract FlightSuretyApp {
                                     uint8 statusCode
                                 )
                                 internal
-                                pure
     {
+        if(statusCode == STATUS_CODE_LATE_AIRLINE) {
+            flightSuretyData.creditInsurees(flight, 15); // insurance multiple is 1.5x
+        }
     }
 
 
@@ -200,6 +213,15 @@ contract FlightSuretyApp {
                                             });
 
         emit OracleRequest(index, airline, flight, timestamp);
+    }
+
+    function buyInsurance (string flightNumber, uint256 amount) external {
+        require(msg.value <= 1 ether, "You can only buy insurance for up to 1 ether");
+        flightSuretyData.buyInsurance(flightNumber, msg.sender, msg.value);
+    }
+
+    function payoutInsuree (address insuree, uint256 amount) external {
+        flightSuretyData.payInsuree(insuree, amount);
     }
 
 
@@ -383,5 +405,7 @@ contract FlightSuretyData {
     function getAccountBalance (address airline) external view returns(bool);
     function getOperatingAirlines () external view returns(address[]);
     function isOperatingAirline(address airline) external view returns(bool);
-
+    function creditInsurees(string flightNumber, uint8 multiple) external;
+    function payInsuree (address insuree, uint256 amount) external;
+    function buyInsurance (string flightNumber, address insuree, uint256 amount) external;
 }
