@@ -3,7 +3,8 @@ import Config from './config.json';
 import Web3 from 'web3';
 
 function randomDate(start, end) {
-    return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    let date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    return date.getTime();
 }
 
 export default class Contract {
