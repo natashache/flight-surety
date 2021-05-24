@@ -184,7 +184,7 @@ contract FlightSuretyData {
                                 address newAirline
                             )
                             external
-                            requireIsAuthorizedCaller
+                            // requireIsAuthorizedCaller
     {
         airlines[newAirline] = airlineObj({
             isRegistered: true,
