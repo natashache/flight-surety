@@ -262,7 +262,7 @@ contract FlightSuretyData {
         insuree.transfer(amount);
     }
 
-    function getInsureeBalance (address insuree) external requireIsOperational returns(uint) {
+    function getInsureeBalance (address insuree) external view requireIsOperational returns(uint256) {
         return insureeBalance[insuree];
     }
 

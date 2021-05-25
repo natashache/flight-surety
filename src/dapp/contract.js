@@ -1,4 +1,5 @@
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
+import FlightSuretyData from '../../build/contracts/FlightSuretyData.json'
 import Config from './config.json';
 import Web3 from 'web3';
 
@@ -11,18 +12,21 @@ export default class Contract {
     constructor(network, callback) {
 
         let config = Config[network];
+        let firstAirline = '0x37C414eDb9dAc0525170e6965F6196D43Fbae2e4';
         this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress, config.dataAddress);
+        this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, config.dataAddress, firstAirline);
+        this.appAddress = config.appAddress;
         this.initialize(callback);
         this.owner = null;
         this.airlines = [];
         this.passengers = {};
         this.flights = [];
+        this.flightNumbers = ['FL101', 'FL201', 'FL301', 'FL401', 'FL501'];
     }
 
     initialize(callback) {
         this.web3.eth.getAccounts(async (error, accts) => {
-
             this.owner = accts[0];
             let self = this;
             // while(this.airlines.length < 5) {
@@ -31,13 +35,14 @@ export default class Contract {
 
             // register 5 airlines on start
             // this.registerAirline(this.owner);
+
+            self.flightSuretyData.methods.authorizeCaller(self.appAddress)
+                .send({ from: self.owner, gas: 300000}, (err, result) => {
+                    if(err) console.log('authorizeCaller error: ', err.message);
+                });
             this.fundAirline(this.owner);
-            console.log('candidate airlines: ', accts.slice(1,5));
             this.registerAndFundAirlines(accts.slice(1,5));
 
-            // fetch the airlines
-            this.airlines = await this.flightSuretyApp.methods.getOperatingAirlines().call({ from: self.owner});
-            console.log('operating airlines: ', this.airlines);
 
             // create the passengers
             let counter = 10;
@@ -50,27 +55,36 @@ export default class Contract {
             }
             console.log('passengers: ', this.passengers);
 
-            // create the filights
-            let flightNumbers = ['FL101', 'FL201', 'FL301', 'FL401', 'FL501'];
-            flightNumbers.forEach((item, index) => {
-                this.flights.push({
-                    flight: item,
-                    airline: self.airlines[index],
-                    timestamp: randomDate(new Date(), new Date(Date.now() + 86400000)), // one day interval
-                })
-            });
-            console.log(this.flights);
-
             callback();
         });
     }
 
     async registerAndFundAirlines(airlines) {
+        console.log('candidate airlines: ', airlines);
         let self = this;
         for(let i = 0; i < airlines.length; i++) {
             self.registerAirline(airlines[i], self.owner);
             self.fundAirline(airlines[i]);
         }
+
+        // fetch the airlines
+        self.airlines = await self.flightSuretyApp.methods.getOperatingAirlines().call({ from: self.owner});
+        self.createFlights();
+        // console.log('operating airlines: ', self.airlines);
+    }
+
+    createFlights() {
+            // create the filights
+        self = this;
+        self.flightNumbers.forEach((item, index) => {
+            console.log('airline: ', self.airlines[index]);
+            self.flights.push({
+                flight: item,
+                airline: self.airlines[index],
+                timestamp: randomDate(new Date(), new Date(Date.now() + 86400000)), // one day interval
+            })
+        });
+        console.log(this.flights);
     }
 
     async registerAirline(airline, owner) {
@@ -117,20 +131,21 @@ export default class Contract {
         if (balance > 0) {
             await self.flightSuretyApp.methods.payoutInsuree(passenger, balance)
                 .send({ from: passenger, gas: 1000000 }, (err, result) => {
-                    callback(err, balance);
+                    callback(err, `paid ${balance}`);
                 });
         } else {
-            console.log("You haven't bought any insurance");
+            console.log("You don't have any insurance payment!");
+            callback(null, "You don't have any insurance payment!")
         }
     }
 
     async getAccountBalance(passenger, callback) {
-        await self.flightSuretyApp.methods.getInsureeBalance(passenger)
+        let self = this;
+        self.passengers[passenger].payoutBalance = await self.flightSuretyApp.methods.getInsureeBalance(passenger)
             .send({ from: passenger }, (err, result) => {
-                console.log('payoutBalance: ', result);
-                self.passengers[passenger].payoutBalance = result;
-                callback(err, result);
-            })
+                callback(err, self.passengers[passenger].payoutBalance);
+            });
+        consol.log('payoutBalance: ', self.passengers[passenger].payoutBalance);
     }
 
     isOperational(callback) {
@@ -148,7 +163,7 @@ export default class Contract {
                 payload = item;
             }
         });
-
+        console.log('payload: ', payload);
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
             .send({ from: self.owner}, (error, result) => {

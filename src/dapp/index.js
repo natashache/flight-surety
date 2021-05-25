@@ -13,7 +13,6 @@ import './flightsurety.css';
         // Read transaction
         contract.isOperational((error, result) => {
             // console.log(error,result);
-            console.log('operation status: ', result);
             display('Operational Status', 'Check if contract is operational', [ { label: 'Operational Status', error: error, value: result} ]);
         });
 
@@ -22,7 +21,7 @@ import './flightsurety.css';
         DOM.elid('submit-oracle').addEventListener('click', () => {
             let flightNumber = DOM.elid('flight-number').value;
             contract.fetchFlightStatus(flightNumber, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
+                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: flightNumber } ]);
             });
         });
 
@@ -38,15 +37,15 @@ import './flightsurety.css';
 
         DOM.elid('get-balance').addEventListener('click', () => {
             let passenger = DOM.elid('passenger-address-balance').value;
-            contract.getAccountBalance(passenger, (error, result) => {
-                display('Payout account', 'Balance available to pay out', [ { label: 'Balance for ', error: error, value: passenger + ': ' + result} ]);
+            contract.getAccountBalance(passenger, (error, balance) => {
+                display('Payout account', 'Balance available to pay out', [ { label: 'Balance for ', error: error, value: passenger + ' is: ' + balance} ]);
             });
         });
 
         DOM.elid('withdraw').addEventListener('click', () => {
             let passenger = DOM.elid('passenger-address-withdraw').value;
-            contract.payInsurance(passenger, (error, balance) => {
-                display('Payout', 'Pay insurance to passenger', [ { label: 'Pay insurance:', error: error, value: 'paid: ' + balance} ]);
+            contract.payInsurance(passenger, (error, text) => {
+                display('Payout', 'Pay insurance to passenger', [ { label: 'Pay insurance:', error: error, value: text} ]);
             });
         });
     });

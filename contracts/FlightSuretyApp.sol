@@ -224,9 +224,10 @@ contract FlightSuretyApp {
         flightSuretyData.payInsuree(insuree, amount);
     }
 
-    function getInsureeBalance (address insuree) external view returns(uint) {
+    function getInsureeBalance (address insuree) external returns(uint256) {
         require(msg.sender == insuree, "You can only query your own balance");
-        return flightSuretyData.getInsureeBalance(insuree);
+        uint256 balance = flightSuretyData.getInsureeBalance(insuree);
+        return balance;
     }
 
 
