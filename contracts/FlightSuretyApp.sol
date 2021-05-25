@@ -215,7 +215,7 @@ contract FlightSuretyApp {
         emit OracleRequest(index, airline, flight, timestamp);
     }
 
-    function buyInsurance (string flightNumber, uint256 amount) external {
+    function buyInsurance (string flightNumber, uint256 amount) external payable {
         require(msg.value <= 1 ether, "You can only buy insurance for up to 1 ether");
         flightSuretyData.buyInsurance(flightNumber, msg.sender, msg.value);
     }
@@ -224,6 +224,10 @@ contract FlightSuretyApp {
         flightSuretyData.payInsuree(insuree, amount);
     }
 
+    function getInsureeBalance (address insuree) external view returns(uint) {
+        require(msg.sender == insuree, "You can only query your own balance");
+        return flightSuretyData.getInsureeBalance(insuree);
+    }
 
 
 // region ORACLE MANAGEMENT
@@ -407,5 +411,6 @@ contract FlightSuretyData {
     function isOperatingAirline(address airline) external view returns(bool);
     function creditInsurees(string flightNumber, uint8 multiple) external;
     function payInsuree (address insuree, uint256 amount) external;
-    function buyInsurance (string flightNumber, address insuree, uint256 amount) external;
+    function buyInsurance (string flightNumber, address insuree, uint256 amount) external payable;
+    function getInsureeBalance (address insuree) external returns(uint);
 }

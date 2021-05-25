@@ -26,6 +26,29 @@ import './flightsurety.css';
             });
         });
 
+        DOM.elid('purchase').addEventListener('click', () => {
+            let flightNumber = DOM.elid('flights').value;
+            let passenger = DOM.elid('passenger-address-buy').value;
+            let amount = DOM.elid('insurance').value;
+
+            contract.buyInsurance(passenger, amount, flightNumber, (error, result) => {
+                display('Purchase', 'Purchase insurance', [ { label: 'Purchase insurance:', error: error, value: flightNumber + ' ' + amount + ' ' + 'ether'} ]);
+            });
+        });
+
+        DOM.elid('get-balance').addEventListener('click', () => {
+            let passenger = DOM.elid('passenger-address-balance').value;
+            contract.getAccountBalance(passenger, (error, result) => {
+                display('Payout account', 'Balance available to pay out', [ { label: 'Balance for ', error: error, value: passenger + ': ' + result} ]);
+            });
+        });
+
+        DOM.elid('withdraw').addEventListener('click', () => {
+            let passenger = DOM.elid('passenger-address-withdraw').value;
+            contract.payInsurance(passenger, (error, balance) => {
+                display('Payout', 'Pay insurance to passenger', [ { label: 'Pay insurance:', error: error, value: 'paid: ' + balance} ]);
+            });
+        });
     });
 
 

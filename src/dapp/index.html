@@ -37,9 +37,16 @@
 
         <div class="row top-20">
             <label for="flight">Buy Insurance</label>
-            <select id="passengers"></select>
+            <label for="passenger-address-buy">Passenger address</label>
+            <input type="text" id="passenger-address-buy">
             <label for="flight">Flight</label>
-            <select id="flights"></select>
+            <select id="flights">
+              <option value="FL101">FL101</option>
+              <option value="FL201">FL201</option>
+              <option value="FL301">FL301</option>
+              <option value="FL401">FL401</option>
+              <option value="FL501">FL501</option>
+            </select>
             <input type="text" id="insurance"/><label>eth</label>
             <button class="btn btn-primary" id="purchase">Buy</button>
         </div>
@@ -47,7 +54,7 @@
         <div class="row top-20">
             <label for="passenger">Passenger address</label>
             <input type="text" id="passenger-address-balance">
-            <button class="btn btn-primary" id="show">Show account balance</button>
+            <button class="btn btn-primary" id="get-balance">Get account balance</button>
         </div>
 
 

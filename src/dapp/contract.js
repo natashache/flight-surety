@@ -42,9 +42,13 @@ export default class Contract {
             // create the passengers
             let counter = 10;
             while(counter < 15) {
-                this.passengers[accts[counter]] = 0; // each passenger starts w/ zero balance
+                this.passengers[accts[counter]] = {
+                    insurancePremiumBalance: 0,
+                    payoutBalance: 0,
+                }; // each passenger starts w/ zero balance
                 counter++;
             }
+            console.log('passengers: ', this.passengers);
 
             // create the filights
             let flightNumbers = ['FL101', 'FL201', 'FL301', 'FL401', 'FL501'];
@@ -90,29 +94,43 @@ export default class Contract {
 
     }
 
-    async buyInsurance(passenger, amount, flight) {
+    async buyInsurance(passenger, amount, flight, callback) {
         let self  = this;
         let insurancePremium = self.web3.utils.toWei(amount).toString();
+        // let insurancePremium = amount * 1000000000000000000;
+        console.log('insurancePremium: ', insurancePremium);
         if(self.passengers[passenger]) {
-            self.passengers[passenger] += insurancePremium;
+            self.passengers[passenger].insurancePremiumBalance += insurancePremium;
         } else {
-            self.passengers[passenger] = insurancePremium;
+            self.passengers[passenger].insurancePremiumBalance = insurancePremium;
         }
 
         await self.flightSuretyApp.methods.buyInsurance(flight, insurancePremium)
-            .send({ from: passenger, value: insurancePremium, gas: 1000000 });
+            .send({ from: passenger, value: insurancePremium, gas: 1000000 }, (err, result) => {
+                callback(err, result);
+            });
     }
 
-    async payInsurance(passenger) {
+    async payInsurance(passenger, callback) {
         let self  = this;
-        let balance = self.passengers[pessenger];
+        let balance = self.passengers[passenger].payoutBalance;
         if (balance > 0) {
-            let payout = balance * 3 / 2;
-            await self.flightSuretyApp.methods.payoutInsuree(passenger, payout)
-                .send({ from: passenger, gas: 1000000 });
+            await self.flightSuretyApp.methods.payoutInsuree(passenger, balance)
+                .send({ from: passenger, gas: 1000000 }, (err, result) => {
+                    callback(err, balance);
+                });
         } else {
             console.log("You haven't bought any insurance");
         }
+    }
+
+    async getAccountBalance(passenger, callback) {
+        await self.flightSuretyApp.methods.getInsureeBalance(passenger)
+            .send({ from: passenger }, (err, result) => {
+                console.log('payoutBalance: ', result);
+                self.passengers[passenger].payoutBalance = result;
+                callback(err, result);
+            })
     }
 
     isOperational(callback) {
@@ -134,7 +152,8 @@ export default class Contract {
         self.flightSuretyApp.methods
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
             .send({ from: self.owner}, (error, result) => {
-                callback(error, payload);
+                console.log('result: ', result);
+                callback(error, result);
             });
     }
 }

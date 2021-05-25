@@ -218,6 +218,7 @@ contract FlightSuretyData {
         insureesForFlight[flightNumber].push(insuree);
         address airlineAddress = flights[flightNumber].airline;
         airlines[airlineAddress].balance = airlines[airlineAddress].balance.add(amount);
+        insureeBalance[insuree] = 0; // payout balance starts with 0
     }
 
     /**
@@ -260,6 +261,11 @@ contract FlightSuretyData {
         insureeBalance[insuree] = insureeBalance[insuree].sub(amount);
         insuree.transfer(amount);
     }
+
+    function getInsureeBalance (address insuree) external requireIsOperational returns(uint) {
+        return insureeBalance[insuree];
+    }
+
 
    /**
     * @dev Initial funding for the insurance. Unless there are too many delayed flights
